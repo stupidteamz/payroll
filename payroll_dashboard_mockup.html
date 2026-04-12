@@ -1,0 +1,207 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.app{display:flex;min-height:600px;font-size:13px;background:var(--color-background-tertiary);border-radius:var(--border-radius-lg);overflow:hidden;border:0.5px solid var(--color-border-tertiary)}
+.sidebar{width:200px;flex-shrink:0;background:#1e2d45;padding:0;display:flex;flex-direction:column}
+.logo{padding:18px 16px;border-bottom:0.5px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:10px}
+.logo-icon{width:28px;height:28px;border-radius:6px;background:#3b82f6;display:flex;align-items:center;justify-content:center}
+.logo-text{color:#fff;font-size:12px;font-weight:500;line-height:1.3}
+.nav{padding:12px 8px;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:6px;color:rgba(255,255,255,0.55);cursor:pointer;font-size:12px;margin-bottom:2px}
+.nav-item.active{background:rgba(59,130,246,0.25);color:#fff}
+.nav-item svg{opacity:0.7;flex-shrink:0}
+.nav-item.active svg{opacity:1}
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.topbar{padding:14px 20px;background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:space-between}
+.topbar-title{font-size:15px;font-weight:500;color:var(--color-text-primary)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.avatar{width:30px;height:30px;border-radius:50%;background:#3b82f6;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:500}
+.content{padding:16px 20px;overflow:auto;flex:1;background:var(--color-background-tertiary)}
+.stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.stat-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:14px}
+.stat-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.stat-icon{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stat-value{font-size:20px;font-weight:500;color:var(--color-text-primary)}
+.mid-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:14px}
+.card-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:12px}
+.payslip-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:12px}
+.payslip-row:last-child{border-bottom:none}
+.payslip-name{color:var(--color-text-primary);font-weight:500}
+.payslip-period{color:var(--color-text-secondary)}
+.payslip-amount{font-weight:500;color:var(--color-text-primary)}
+.badge{font-size:10px;padding:3px 8px;border-radius:10px;font-weight:500}
+.badge-paid{background:#dcfce7;color:#166534}
+.badge-pending{background:#fef9c3;color:#854d0e}
+.chart-bars{display:flex;align-items:flex-end;gap:6px;height:100px;padding-top:8px}
+.bar-group{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
+.bar-wrap{display:flex;gap:2px;align-items:flex-end;height:80px}
+.bar{border-radius:2px 2px 0 0;width:10px}
+.bar-label{font-size:9px;color:var(--color-text-secondary);text-align:center}
+.legend{display:flex;gap:12px;margin-top:8px}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--color-text-secondary)}
+.legend-dot{width:8px;height:8px;border-radius:2px}
+.bot-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:10px}
+.emp-table{width:100%;font-size:11px;border-collapse:collapse}
+.emp-table th{color:var(--color-text-secondary);font-weight:400;padding:0 0 8px;text-align:left}
+.emp-table td{padding:7px 0;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary)}
+.emp-table tr:last-child td{border-bottom:none}
+.badge-active{background:#dcfce7;color:#166534;font-size:10px;padding:2px 7px;border-radius:10px}
+.badge-inactive{background:#fee2e2;color:#991b1b;font-size:10px;padding:2px 7px;border-radius:10px}
+.summary-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:12px}
+.summary-row:last-child{border-bottom:none}
+.summary-key{color:var(--color-text-secondary)}
+.summary-val{font-weight:500;color:var(--color-text-primary)}
+.net-box{background:#1e2d45;border-radius:var(--border-radius-md);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.net-label{color:rgba(255,255,255,0.7);font-size:12px}
+.net-val{color:#fff;font-size:16px;font-weight:500}
+</style>
+
+<div class="app">
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" fill="white"/><rect x="8" y="1" width="5" height="5" rx="1" fill="white" opacity="0.6"/><rect x="1" y="8" width="5" height="5" rx="1" fill="white" opacity="0.6"/><rect x="8" y="8" width="5" height="5" rx="1" fill="white" opacity="0.4"/></svg>
+    </div>
+    <div class="logo-text">My WorkTime<br>&amp; Payroll</div>
+  </div>
+  <div class="nav">
+    <div class="nav-item active">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" fill="currentColor"/><rect x="8" y="1" width="5" height="5" rx="1" fill="currentColor"/><rect x="1" y="8" width="5" height="5" rx="1" fill="currentColor"/><rect x="8" y="8" width="5" height="5" rx="1" fill="currentColor"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="4" r="3" stroke="currentColor" stroke-width="1.2"/><path d="M1 13c0-3.3 2.7-5 6-5s6 1.7 6 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Employees
+    </div>
+    <div class="nav-item">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M4 2V1M10 2V1M1 6h12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Schedule
+    </div>
+    <div class="nav-item">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 11V5l5-3 5 3v6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><rect x="5" y="7" width="4" height="4" rx="0.5" stroke="currentColor" stroke-width="1.2"/></svg>
+      Vehicles
+    </div>
+    <div class="nav-item">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="2.5" cy="7" r="1.5" fill="currentColor"/><circle cx="11.5" cy="7" r="1.5" fill="currentColor"/><path d="M4 7h6" stroke="currentColor" stroke-width="1.2"/></svg>
+      Routes
+    </div>
+    <div class="nav-item">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="9" rx="1" stroke="currentColor" stroke-width="1.2"/><path d="M1 6h12M5 3V1M9 3V1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Payroll
+    </div>
+    <div class="nav-item">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10L5 6l3 2 4-5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Reports
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">Dashboard</div>
+    <div class="topbar-right">
+      <span style="font-size:12px;color:var(--color-text-secondary)">Welcome, Admin</span>
+      <div class="avatar">AD</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">
+          <div class="stat-icon" style="background:#eff6ff"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="3.5" r="2.5" stroke="#3b82f6" stroke-width="1.2"/><path d="M1 11c0-2.8 2.2-4 5-4s5 1.2 5 4" stroke="#3b82f6" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+          พนักงานทั้งหมด
+        </div>
+        <div class="stat-value">25</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">
+          <div class="stat-icon" style="background:#f0fdf4"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="2" width="10" height="8" rx="1" stroke="#22c55e" stroke-width="1.2"/><path d="M4 5h4M4 7.5h2" stroke="#22c55e" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+          เงินเดือนรวม/เดือน
+        </div>
+        <div class="stat-value">฿350K</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">
+          <div class="stat-icon" style="background:#fff7ed"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="#f97316" stroke-width="1.2"/><path d="M6 3.5V6l2 1.5" stroke="#f97316" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+          OT รวม
+        </div>
+        <div class="stat-value">120 ชม.</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">
+          <div class="stat-icon" style="background:#fdf4ff"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1l1.3 2.6L10 4.2 8 6.1l.5 2.9L6 7.5 3.5 9l.5-2.9L2 4.2l2.7-.6L6 1z" stroke="#a855f7" stroke-width="1.2" stroke-linejoin="round"/></svg></div>
+          ประกันสังคมรวม
+        </div>
+        <div class="stat-value">฿18,750</div>
+      </div>
+    </div>
+
+    <div class="mid-grid">
+      <div class="card">
+        <div class="card-title">สลิปเงินเดือนล่าสุด</div>
+        <div class="payslip-row">
+          <div><div class="payslip-name">สมชาย วงค์</div><div class="payslip-period" style="font-size:10px;margin-top:1px">เม.ย. 2569</div></div>
+          <div style="display:flex;align-items:center;gap:10px"><span class="payslip-amount">฿28,750</span><span class="badge badge-paid">จ่ายแล้ว</span></div>
+        </div>
+        <div class="payslip-row">
+          <div><div class="payslip-name">สุดา แก้ว</div><div class="payslip-period" style="font-size:10px;margin-top:1px">เม.ย. 2569</div></div>
+          <div style="display:flex;align-items:center;gap:10px"><span class="payslip-amount">฿22,300</span><span class="badge badge-pending">รอดำเนินการ</span></div>
+        </div>
+        <div class="payslip-row">
+          <div><div class="payslip-name">วิชัย มา</div><div class="payslip-period" style="font-size:10px;margin-top:1px">เม.ย. 2569</div></div>
+          <div style="display:flex;align-items:center;gap:10px"><span class="payslip-amount">฿25,500</span><span class="badge badge-paid">จ่ายแล้ว</span></div>
+        </div>
+        <div class="payslip-row">
+          <div><div class="payslip-name">อนุชา ท่า</div><div class="payslip-period" style="font-size:10px;margin-top:1px">เม.ย. 2569</div></div>
+          <div style="display:flex;align-items:center;gap:10px"><span class="payslip-amount">฿24,100</span><span class="badge badge-paid">จ่ายแล้ว</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">ชั่วโมงทำงานรายสัปดาห์</div>
+        <div class="chart-bars">
+          <div class="bar-group"><div class="bar-wrap"><div class="bar" style="height:72px;background:#6ee7b7"></div><div class="bar" style="height:20px;background:#fbbf24"></div></div><div class="bar-label">จ</div></div>
+          <div class="bar-group"><div class="bar-wrap"><div class="bar" style="height:55px;background:#6ee7b7"></div><div class="bar" style="height:30px;background:#fbbf24"></div></div><div class="bar-label">อ</div></div>
+          <div class="bar-group"><div class="bar-wrap"><div class="bar" style="height:80px;background:#6ee7b7"></div><div class="bar" style="height:25px;background:#fbbf24"></div></div><div class="bar-label">พ</div></div>
+          <div class="bar-group"><div class="bar-wrap"><div class="bar" style="height:65px;background:#6ee7b7"></div><div class="bar" style="height:40px;background:#fbbf24"></div></div><div class="bar-label">พฤ</div></div>
+          <div class="bar-group"><div class="bar-wrap"><div class="bar" style="height:70px;background:#6ee7b7"></div><div class="bar" style="height:15px;background:#fbbf24"></div></div><div class="bar-label">ศ</div></div>
+          <div class="bar-group"><div class="bar-wrap"><div class="bar" style="height:40px;background:#6ee7b7"></div><div class="bar" style="height:35px;background:#fbbf24"></div></div><div class="bar-label">ส</div></div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#6ee7b7"></div>ปกติ</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div>OT</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bot-grid">
+      <div class="card">
+        <div class="card-title">รายชื่อพนักงาน</div>
+        <table class="emp-table">
+          <thead><tr><th>ชื่อ</th><th>ตำแหน่ง</th><th>แผนก</th><th>สถานะ</th></tr></thead>
+          <tbody>
+            <tr><td>สมชาย ว.</td><td style="color:var(--color-text-secondary)">คนขับ</td><td style="color:var(--color-text-secondary)">ขนส่ง</td><td><span class="badge-active">ปกติ</span></td></tr>
+            <tr><td>สุดา แ.</td><td style="color:var(--color-text-secondary)">บัญชี</td><td style="color:var(--color-text-secondary)">การเงิน</td><td><span class="badge-active">ปกติ</span></td></tr>
+            <tr><td>วิชัย ม.</td><td style="color:var(--color-text-secondary)">หัวหน้า</td><td style="color:var(--color-text-secondary)">ปฏิบัติการ</td><td><span class="badge-active">ปกติ</span></td></tr>
+            <tr><td>นิน่า ส.</td><td style="color:var(--color-text-secondary)">ดิสแพทช์</td><td style="color:var(--color-text-secondary)">โลจิสติกส์</td><td><span class="badge-active">ปกติ</span></td></tr>
+            <tr><td>กฤต อ.</td><td style="color:var(--color-text-secondary)">ช่าง</td><td style="color:var(--color-text-secondary)">ซ่อมบำรุง</td><td><span class="badge-inactive">พักงาน</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">สรุปเงินเดือน เม.ย.</div>
+        <div class="summary-row"><span class="summary-key">เงินเดือนพื้นฐาน</span><span class="summary-val">฿330,000</span></div>
+        <div class="summary-row"><span class="summary-key">ค่า OT รวม</span><span class="summary-val">฿20,000</span></div>
+        <div class="summary-row"><span class="summary-key">หักประกันสังคม</span><span class="summary-val" style="color:var(--color-text-danger)">-฿15,250</span></div>
+        <div class="net-box">
+          <span class="net-label">ยอดสุทธิรวม</span>
+          <span class="net-val">฿334,750</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>

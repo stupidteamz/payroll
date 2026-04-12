@@ -1,0 +1,27 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Dependencies
+node_modules/
+dist/
+build/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite-journal
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+debug.log
+
+# System
+.vscode/
+.idea/
+*.bak

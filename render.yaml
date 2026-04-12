@@ -1,0 +1,32 @@
+services:
+  - type: postgres
+    name: payroll-db
+    databaseName: payroll
+    userName: payroll_user
+    plan: free
+
+  - type: web
+    name: payroll-backend
+    runtime: node
+    buildCommand: "cd backend && npm install"
+    startCommand: "cd backend && node server.js"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: payroll-db
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generate: true
+
+  - type: static
+    name: payroll-frontend
+    buildCommand: "cd frontend && npm install && npm run build"
+    staticPublishPath: "frontend/dist"
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: payroll-backend
+          property: url

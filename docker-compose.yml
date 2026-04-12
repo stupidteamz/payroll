@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: payroll_db
+    environment:
+      POSTGRES_USER: payroll_user
+      POSTGRES_PASSWORD: secure_password
+      POSTGRES_DB: payroll_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - payroll_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: payroll_backend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://payroll_user:secure_password@db:5432/payroll_db
+    depends_on:
+      - db
+    networks:
+      - payroll_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: payroll_frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - payroll_network
+
+volumes:
+  postgres_data:
+
+networks:
+  payroll_network:
+    driver: bridge
