@@ -21,12 +21,10 @@ services:
       - key: JWT_SECRET
         value: "super_secret_payroll_key_2026"
 
-  - type: web
+  - type: static
     name: payroll-frontend
-    plan: free
-    runtime: static
     buildCommand: "cd frontend && npm install && npm run build"
-    staticPublishPath: "frontend/dist"
+    publishPath: "frontend/dist"
     envVars:
       - key: VITE_API_URL
         value: "https://payroll-backend.onrender.com"
