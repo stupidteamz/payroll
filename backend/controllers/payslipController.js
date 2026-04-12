@@ -4,24 +4,21 @@ const { Op } = require('sequelize');
 const { createPayslipPDF } = require('../utils/pdfGenerator');
 
 /**
- * Helper to get date filter based on database dialect
+ * Helper to get date filter (Works for both SQLite and Postgres)
  */
 const getDateFilter = (month, year) => {
-    const isPostgres = sequelize.getDialect() === 'postgres';
-    if (isPostgres) {
-        return {
-            [Op.and]: [
-                sequelize.where(sequelize.fn('EXTRACT', sequelize.literal('MONTH FROM date')), month.toString()),
-                sequelize.where(sequelize.fn('EXTRACT', sequelize.literal('YEAR FROM date')), year.toString())
-            ]
-        };
-    }
-    // Default to SQLite (strftime)
+    const m = parseInt(month);
+    const y = parseInt(year);
+    
+    // Create start and end date for the month
+    const startDate = `${y}-${m.toString().padStart(2, '0')}-01`;
+    const lastDay = new Date(y, m, 0).getDate();
+    const endDate = `${y}-${m.toString().padStart(2, '0')}-${lastDay}`;
+
     return {
-        [Op.and]: [
-            sequelize.where(sequelize.fn('strftime', '%m', sequelize.col('date')), month.toString().padStart(2, '0')),
-            sequelize.where(sequelize.fn('strftime', '%Y', sequelize.col('date')), year.toString())
-        ]
+        date: {
+            [Op.between]: [startDate, endDate]
+        }
     };
 };
 
