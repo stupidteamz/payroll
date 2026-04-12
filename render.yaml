@@ -7,8 +7,8 @@ databases:
 services:
   - type: web
     name: payroll-backend
-    plan: free
     runtime: node
+    plan: free
     buildCommand: "cd backend && npm install"
     startCommand: "cd backend && node server.js"
     envVars:
@@ -21,8 +21,9 @@ services:
       - key: JWT_SECRET
         value: "super_secret_payroll_key_2026"
 
-  - type: static_site
+  - type: web
     name: payroll-frontend
+    runtime: static
     buildCommand: "cd frontend && npm install && npm run build"
     staticPublishPath: "frontend/dist"
     envVars:
