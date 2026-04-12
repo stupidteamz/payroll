@@ -20,8 +20,9 @@ services:
       - key: JWT_SECRET
         generate: true
 
-  - type: static
+  - type: web
     name: payroll-frontend
+    runtime: static
     buildCommand: "cd frontend && npm install && npm run build"
     staticPublishPath: "frontend/dist"
     envVars:
