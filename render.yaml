@@ -18,6 +18,10 @@ services:
           property: connectionString
       - key: NODE_ENV
         value: production
+      - key: ADMIN_USER
+        value: "admin"
+      - key: ADMIN_PASS
+        value: "payroll2026"
       - key: JWT_SECRET
         value: "super_secret_payroll_key_2026"
 
