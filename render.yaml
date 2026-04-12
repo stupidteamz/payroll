@@ -1,10 +1,10 @@
-services:
-  - type: postgres
-    name: payroll-db
+databases:
+  - name: payroll-db
     databaseName: payroll
-    userName: payroll_user
+    user: payroll_user
     plan: free
 
+services:
   - type: web
     name: payroll-backend
     runtime: node
