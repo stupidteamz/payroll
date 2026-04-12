@@ -7,6 +7,7 @@ databases:
 services:
   - type: web
     name: payroll-backend
+    plan: free
     runtime: node
     buildCommand: "cd backend && npm install"
     startCommand: "cd backend && node server.js"
@@ -22,6 +23,7 @@ services:
 
   - type: web
     name: payroll-frontend
+    plan: free
     runtime: static
     buildCommand: "cd frontend && npm install && npm run build"
     staticPublishPath: "frontend/dist"
