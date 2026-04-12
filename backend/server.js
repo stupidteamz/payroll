@@ -58,17 +58,26 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: 'Internal Server Error', error: err.message });
 });
 
-sequelize.authenticate()
-    .then(() => {
-        log('Database connection established.');
-        return sequelize.sync();
-    })
-    .then(() => {
-        log('Database models synced.');
-        app.listen(port, () => log(`Server is running on port ${port}`));
-    })
-    .catch(err => {
-        log(`CRITICAL STARTUP ERROR: ${err.message}`);
-        console.error(err);
-        process.exit(1);
-    });
+const startServer = async (retries = 5) => {
+    while (retries > 0) {
+        try {
+            await sequelize.authenticate();
+            log('Database connection established.');
+            await sequelize.sync();
+            log('Database models synced.');
+            app.listen(port, () => log(`Server is running on port ${port}`));
+            return;
+        } catch (err) {
+            log(`Database connection failed. Retries left: ${retries - 1}`);
+            log(`Error: ${err.message}`);
+            retries -= 1;
+            if (retries === 0) {
+                log('CRITICAL STARTUP ERROR: Could not connect to database after multiple retries.');
+                process.exit(1);
+            }
+            await new Promise(res => setTimeout(res, 5000)); // Wait 5 seconds before retrying
+        }
+    }
+};
+
+startServer();
