@@ -1,174 +1,22 @@
-const { sequelize, Employee, Schedule, Route, Vehicle } = require('../models');
-const { calculateOtPay, calculateSocialSecurity } = require('../utils/payrollCalculations');
-const { Op } = require('sequelize');
-const { createPayslipPDF } = require('../utils/pdfGenerator');
-
-/**
- * Helper to get date filter (Works for both SQLite and Postgres)
- */
-const getDateFilter = (month, year) => {
-    const m = parseInt(month);
-    const y = parseInt(year);
-    
-    // Create start and end date for the month
-    const startDate = `${y}-${m.toString().padStart(2, '0')}-01`;
-    const lastDay = new Date(y, m, 0).getDate();
-    const endDate = `${y}-${m.toString().padStart(2, '0')}-${lastDay}`;
-
-    return {
-        date: {
-            [Op.between]: [startDate, endDate]
-        }
-    };
-};
-
-exports.downloadPayslipPDF = async (req, res) => {
-    try {
-        const { employeeId, month, year } = req.query;
-
-        if (!employeeId || !month || !year) {
-            return res.status(400).json({ message: 'Missing parameters: employeeId, month, and year are required.' });
-        }
-
-        const emp = await Employee.findOne({ where: { employee_id: employeeId } });
-        if (!emp) {
-            return res.status(404).json({ message: 'Employee not found.' });
-        }
-
-        const schedules = await Schedule.findAll({
-            where: {
-                employee_id: emp.id,
-                ...getDateFilter(month, year)
-            },
-            include: [Route, Vehicle]
-        });
-
-        if (schedules.length === 0) {
-            return res.status(404).json({ message: 'ไม่พบข้อมูลการทำงานของพนักงานคนนี้ในเดือนที่เลือก จึงไม่สามารถสร้างสลิปได้' });
-        }
-
-        // Calculate payslip data
-        // ... (rest of the calculation logic)
-        const salary = Number(emp.salary) || 0;
-        const empData = {
-            ...emp.toJSON(),
-            thaiName: emp.thai_name,
-            employeeId: emp.employee_id,
-            otRate: Number(emp.ot_rate),
-        };
-
-        const otPay = calculateOtPay(empData, schedules);
-        const otCount = schedules.filter(s => s.shift === 'OT1' || s.shift === 'OT2').length;
-        const socialSecurity = calculateSocialSecurity(salary);
-
-        const regularShiftsGrouped = schedules
-            .filter(s => s.shift !== 'OT1' && s.shift !== 'OT2')
-            .reduce((acc, s) => {
-                const key = `${s.Route ? s.Route.name : 'Unknown Route'} - ${s.Vehicle ? s.Vehicle.plate_number : 'Unknown Vehicle'}`;
-                acc[key] = (acc[key] || 0) + 1;
-                return acc;
-            }, {});
-
-        const totalEarnings = salary + otPay;
-        const netSalary = totalEarnings - socialSecurity;
-
-        const payslipResult = {
-            employeeId: empData.employeeId,
-            thaiName: empData.thaiName,
-            position: emp.position,
-            month: parseInt(month),
-            year: parseInt(year),
-            earnings: {
-                baseSalary: salary,
-                otPay: otPay,
-                otCount: otCount,
-                regularShifts: regularShiftsGrouped,
-            },
-            deductions: { socialSecurity: socialSecurity },
-            netSalary,
-        };
-
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=Payslip_${employeeId}_${month}_${year}.pdf`);
-
-        await createPayslipPDF(payslipResult, res);
-
-    } catch (err) {
-        console.error('Error generating PDF payslip:', err);
-        res.status(500).json({ message: 'Internal Server Error' });
-    }
-};
+const { Employee, WorkRecord, MonthlyDeduction } = require('../models/new_models');
+const { calculateMonthlyPayroll } = require('../utils/newPayrollCalculator');
 
 exports.generatePayslip = async (req, res) => {
     try {
         const { month, year } = req.query;
-        
         if (!month || !year) {
-            return res.status(400).json({ message: 'Month and Year are required for payslip generation.' });
+            return res.status(400).json({ message: 'Month and Year are required.' });
         }
 
-        const employees = await Employee.findAll();
-        
-        const schedules = await Schedule.findAll({
-            where: getDateFilter(month, year),
-            include: [Route, Vehicle]
-        });
-
-        const payslips = employees.map(emp => {
-            const employeeSchedules = schedules.filter(s => s.employee_id === emp.id);
-            
-            // SKIP if no work records found for this employee in the selected month
-            if (employeeSchedules.length === 0) return null;
-
-            const salary = Number(emp.salary) || 0;
-            const empData = {
-                ...emp.toJSON(),
-                thaiName: emp.thai_name,
-                employeeId: emp.employee_id,
-                otRate: Number(emp.ot_rate),
-                bankAccountNumber: emp.bank_account_number,
-                bankName: emp.bank_name
-            };
-
-            const otPay = calculateOtPay(empData, employeeSchedules);
-            const otCount = employeeSchedules.filter(s => s.shift === 'OT1' || s.shift === 'OT2').length;
-            const socialSecurity = calculateSocialSecurity(salary);
-
-            const regularShiftsGrouped = employeeSchedules
-                .filter(s => s.shift !== 'OT1' && s.shift !== 'OT2')
-                .reduce((acc, s) => {
-                    const key = `${s.Route ? s.Route.name : 'Unknown Route'} - ${s.Vehicle ? s.Vehicle.plate_number : 'Unknown Vehicle'}`;
-                    acc[key] = (acc[key] || 0) + 1;
-                    return acc;
-                }, {});
-
-            const totalEarnings = salary + otPay;
-            const netSalary = totalEarnings - socialSecurity;
-
-            return {
-                employeeId: empData.employeeId,
-                thaiName: empData.thaiName,
-                position: emp.position,
-                bankAccountNumber: empData.bankAccountNumber,
-                bankName: empData.bankName,
-                month: parseInt(month),
-                year: parseInt(year),
-                earnings: {
-                    baseSalary: salary,
-                    otPay: otPay,
-                    otCount: otCount,
-                    regularShifts: regularShiftsGrouped,
-                },
-                deductions: { socialSecurity: socialSecurity },
-                totalEarnings,
-                totalDeductions: socialSecurity,
-                netSalary,
-            };
-        }).filter(p => p !== null); // Remove null entries
-
+        const payslips = await calculateMonthlyPayroll(month, year);
         res.json(payslips);
     } catch (err) {
         console.error('Error generating payslips:', err);
         res.status(500).json({ message: 'Internal Server Error' });
     }
+};
+
+// Placeholder for PDF download (will need updates to match new schema)
+exports.downloadPayslipPDF = async (req, res) => {
+    res.status(501).json({ message: 'Feature under construction for new schema.' });
 };

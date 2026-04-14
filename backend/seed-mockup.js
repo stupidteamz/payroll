@@ -1,4 +1,4 @@
-const { sequelize, Employee, Route, Vehicle, Schedule } = require('./models');
+const { sequelize, Employee, Route, Vehicle, WorkRecord } = require('./models/new_models');
 
 async function seedMockup() {
     try {
@@ -38,38 +38,39 @@ async function seedMockup() {
         }
         console.log(`✅ Seeded ${createdVehicles.length} vehicles.`);
 
-        // 3. Seed Schedules (April 2026)
+        // 3. Seed WorkRecords (April 2026)
         const employees = await Employee.findAll({ limit: 10 });
         if (employees.length === 0) {
-            console.log('❌ No employees found to seed schedules.');
+            console.log('❌ No employees found.');
             return;
         }
 
         const year = 2026;
         const month = 4;
-        let scheduleCount = 0;
+        let recordCount = 0;
 
         for (let i = 0; i < 5; i++) {
             const emp = employees[i];
-            // Assign 10 random work days for each employee
             for (let day = 1; day <= 10; day++) {
                 const date = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
                 const route = createdRoutes[Math.floor(Math.random() * createdRoutes.length)];
                 const vehicle = createdVehicles[Math.floor(Math.random() * createdVehicles.length)];
-                const shifts = ['Morning', 'Afternoon', 'OT1', 'OT2'];
-                const shift = shifts[Math.floor(Math.random() * shifts.length)];
+                const types = ['Regular', 'OT_Holiday', 'OT_Sunday', 'OT_Replace'];
+                const type = types[Math.floor(Math.random() * types.length)];
 
-                await Schedule.create({
+                await WorkRecord.create({
                     date,
-                    shift,
+                    type,
+                    trips: Math.floor(Math.random() * 3) + 1,
+                    rate: route.trip_rate,
                     employee_id: emp.id,
                     route_id: route.id,
                     vehicle_id: vehicle.id
                 });
-                scheduleCount++;
+                recordCount++;
             }
         }
-        console.log(`✅ Seeded ${scheduleCount} schedules for April 2026.`);
+        console.log(`✅ Seeded ${recordCount} work records for April 2026.`);
         console.log('🚀 Mockup data seeding completed!');
 
     } catch (err) {
