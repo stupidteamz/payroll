@@ -19,11 +19,11 @@ services:
       - key: NODE_ENV
         value: production
       - key: ADMIN_USER
-        value: "admin"
+        sync: false
       - key: ADMIN_PASS
-        value: "payroll2026"
+        sync: false
       - key: JWT_SECRET
-        value: "super_secret_payroll_key_2026"
+        sync: false
 
   - type: web
     name: payroll-frontend
