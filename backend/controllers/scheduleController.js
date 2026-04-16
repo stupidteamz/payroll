@@ -26,12 +26,13 @@ exports.getSchedules = async (req, res) => {
 };
 
 exports.updateSchedule = async (req, res) => {
-    const { date, employeeId, shift, routeId, vehicleId, isScheduled } = req.body;
+    const { date, employeeId, shift, routeId, vehicleId, isScheduled, workType } = req.body;
 
     try {
         if (isScheduled) {
             await Schedule.findOrCreate({
-                where: { date, employee_id: employeeId, shift, route_id: routeId, vehicle_id: vehicleId }
+                where: { date, employee_id: employeeId, shift, route_id: routeId, vehicle_id: vehicleId },
+                defaults: { work_type: workType || 'regular' }
             });
         } else {
             await Schedule.destroy({

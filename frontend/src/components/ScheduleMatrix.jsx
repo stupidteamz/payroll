@@ -9,7 +9,9 @@ function ScheduleMatrix() {
   const [selectedRouteId, setSelectedRouteId] = useState('')
   const [selectedVehicleId, setSelectedVehicleId] = useState('')
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [workType, setWorkType] = useState('regular')
   const shifts = { 'Morning': 'เช้า', 'Afternoon': 'บ่าย', 'OT1': 'OT1', 'OT2': 'OT2' }
+  const workTypes = { 'regular': 'ปกติ', 'sunday': 'วันอาทิตย์', 'holiday': 'วันหยุด', 'extra': 'พิเศษ' }
 
   useEffect(() => {
     fetchSchedules()
@@ -39,7 +41,15 @@ function ScheduleMatrix() {
     );
     
     try {
-      await updateSchedule({ date: selectedDate, employeeId, shift, routeId: selectedRouteId, vehicleId: selectedVehicleId, isScheduled });
+      await updateSchedule({ 
+        date: selectedDate, 
+        employeeId, 
+        shift, 
+        routeId: selectedRouteId, 
+        vehicleId: selectedVehicleId, 
+        isScheduled,
+        workType
+      });
       fetchSchedules(); 
       refreshGlobalData(); 
     } catch (err) {
@@ -50,13 +60,18 @@ function ScheduleMatrix() {
   return (
     <div className="card">
       <h2>ตารางการทำงาน</h2>
-      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
         <input 
           type="date" 
           value={selectedDate} 
           onChange={e => setSelectedDate(e.target.value)} 
           style={{ padding: '8px' }}
         />
+        <select value={workType} onChange={e => setWorkType(e.target.value)} style={{ padding: '8px', background: '#f0f9ff', fontWeight: 'bold' }}>
+          {Object.entries(workTypes).map(([val, label]) => (
+            <option key={val} value={val}>{label}</option>
+          ))}
+        </select>
         <select value={selectedRouteId} onChange={e => setSelectedRouteId(e.target.value)}>
           <option value="">เลือกเส้นทาง</option>
           {routes.map(route => (
