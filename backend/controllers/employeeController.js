@@ -17,7 +17,6 @@ exports.getEmployees = async (req, res) => {
 
         const { count, rows: employees } = await Employee.findAndCountAll({
             where: whereClause,
-            order: [['createdAt', 'DESC']],
             limit: Number(limit),
             offset: Number(offset)
         });
