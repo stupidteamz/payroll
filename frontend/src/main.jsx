@@ -9,6 +9,7 @@ import VehicleList from './components/VehicleList';
 import RouteList from './components/RouteList';
 import PayslipView from './components/PayslipView';
 import ReportView from './components/ReportView';
+import WorkRecordForm from './components/WorkRecordForm';
 import Login from './components/Login';
 import './Dashboard.css';
 
@@ -33,6 +34,7 @@ function Layout() {
       case '/routes': return 'จัดการเส้นทาง';
       case '/payslips': return 'สร้างสลิปเงินเดือน';
       case '/reports': return 'รายงาน';
+      case '/work-record': return 'บันทึกรายการวิ่งรถ';
       default: return 'ระบบจัดการเงินเดือน';
     }
   };
@@ -45,6 +47,7 @@ function Layout() {
           <Link to="/" className={isActive('/')}>📊 แดชบอร์ด</Link>
           <Link to="/employees" className={isActive('/employees')}>👥 พนักงาน</Link>
           <Link to="/schedule" className={isActive('/schedule')}>📅 ตารางงาน</Link>
+          <Link to="/work-record" className={isActive('/work-record')}>📋 บันทึกรายวัน</Link>
           <Link to="/vehicles" className={isActive('/vehicles')}>🚛 ยานพาหนะ</Link>
           <Link to="/routes" className={isActive('/routes')}>📍 เส้นทาง</Link>
           <Link to="/payslips" className={isActive('/payslips')}>💰 สลิปเงินเดือน</Link>
@@ -65,6 +68,7 @@ function Layout() {
             <Route path="/" element={<Dashboard employees={employees} summary={summary} />} />
             <Route path="/employees" element={<EmployeeList employees={employees} fetchData={fetchData} />} />
             <Route path="/schedule" element={<ScheduleMatrix employees={employees} routes={routes} vehicles={vehicles} fetchData={fetchData} />} />
+            <Route path="/work-record" element={<WorkRecordForm />} />
             <Route path="/vehicles" element={<VehicleList vehicles={vehicles} fetchData={fetchData} />} />
             <Route path="/routes" element={<RouteList routes={routes} fetchData={fetchData} />} />
             <Route path="/payslips" element={<PayslipView />} />

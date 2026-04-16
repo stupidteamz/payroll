@@ -19,7 +19,7 @@ async function migrateData() {
                     employee_id: `EMP-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
                     thai_name: emp.thaiName,
                     position: emp.position,
-                    salary: emp.salary || 0,
+                    base_salary: emp.salary || 0,
                     bank_account_number: emp.bankAccountNumber === 'nan' ? '' : emp.bankAccountNumber,
                     bank_name: emp.bankName || 'กสิกรไทย',
                     ot_rate: 100
