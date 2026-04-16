@@ -25,6 +25,7 @@ const scheduleRoutes = require('./routes/scheduleRoutes');
 const routeRoutes = require('./routes/routeRoutes');
 const payslipRoutes = require('./routes/payslipRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const advanceRoutes = require('./routes/advanceRoutes');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -52,6 +53,7 @@ app.use('/schedules', scheduleRoutes);
 app.use('/routes', routeRoutes);
 app.use('/payslips', payslipRoutes);
 app.use('/reports', reportRoutes);
+app.use('/advances', advanceRoutes);
 
 app.use((err, req, res, next) => {
     log(`ERROR: ${err.message}`);

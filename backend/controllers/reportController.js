@@ -1,28 +1,8 @@
 const { sequelize, Employee, Schedule, Route, Vehicle } = require('../models');
 const { calculateOtPay, calculateSocialSecurity } = require('../utils/payrollCalculations');
 const { Op } = require('sequelize');
+const { getDateFilter } = require('../utils/dateHelper');
 
-/**
- * Helper to get date filter based on database dialect
- */
-const getDateFilter = (month, year) => {
-    const isPostgres = sequelize.getDialect() === 'postgres';
-    if (isPostgres) {
-        return {
-            [Op.and]: [
-                sequelize.where(sequelize.fn('EXTRACT', sequelize.literal('MONTH FROM date')), month.toString()),
-                sequelize.where(sequelize.fn('EXTRACT', sequelize.literal('YEAR FROM date')), year.toString())
-            ]
-        };
-    }
-    // Default to SQLite (strftime)
-    return {
-        [Op.and]: [
-            sequelize.where(sequelize.fn('strftime', '%m', sequelize.col('date')), month.toString().padStart(2, '0')),
-            sequelize.where(sequelize.fn('strftime', '%Y', sequelize.col('date')), year.toString())
-        ]
-    };
-};
 exports.getDashboardSummary = async (req, res) => {
     try {
         const { month, year } = req.query;

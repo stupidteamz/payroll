@@ -1,26 +1,8 @@
-const { sequelize, Employee, Schedule, Route, Vehicle } = require('../models');
-const { calculateOtPay, calculateSocialSecurity } = require('../utils/payrollCalculations');
+const { sequelize, Employee, Schedule, Route, Vehicle, Advance, PayrollHistory } = require('../models');
+const { calculateOtPay, calculateSocialSecurity, calculateDepositDeduction } = require('../utils/payrollCalculations');
 const { Op } = require('sequelize');
 const { createPayslipPDF } = require('../utils/pdfGenerator');
-
-/**
- * Helper to get date filter (Works for both SQLite and Postgres)
- */
-const getDateFilter = (month, year) => {
-    const m = parseInt(month);
-    const y = parseInt(year);
-    
-    // Create start and end date for the month
-    const startDate = `${y}-${m.toString().padStart(2, '0')}-01`;
-    const lastDay = new Date(y, m, 0).getDate();
-    const endDate = `${y}-${m.toString().padStart(2, '0')}-${lastDay}`;
-
-    return {
-        date: {
-            [Op.between]: [startDate, endDate]
-        }
-    };
-};
+const { getDateFilter } = require('../utils/dateHelper');
 
 exports.downloadPayslipPDF = async (req, res) => {
     try {
@@ -47,45 +29,60 @@ exports.downloadPayslipPDF = async (req, res) => {
             return res.status(404).json({ message: 'ไม่พบข้อมูลการทำงานของพนักงานคนนี้ในเดือนที่เลือก จึงไม่สามารถสร้างสลิปได้' });
         }
 
-        // Calculate payslip data
-        // ... (rest of the calculation logic)
+        // Fetch Advances
+        const advances = await Advance.findAll({
+            where: { employee_id: emp.id, ...getDateFilter(month, year) }
+        });
+        const totalAdvance = advances.reduce((sum, a) => sum + Number(a.amount), 0);
+
+        // Fetch Installment Count
+        const installmentCount = await PayrollHistory.count({
+            where: { employee_id: emp.id }
+        }) + 1;
+
         const salary = Number(emp.salary) || 0;
-        const empData = {
-            ...emp.toJSON(),
-            thaiName: emp.thai_name,
-            employeeId: emp.employee_id,
-            otRate: Number(emp.ot_rate),
-        };
-
-        const otPay = calculateOtPay(empData, schedules);
-        const otCount = schedules.filter(s => s.shift === 'OT1' || s.shift === 'OT2').length;
+        const otPaySunday = calculateOtPay(emp, schedules.filter(s => s.work_type === 'sunday'));
+        const otPayHoliday = calculateOtPay(emp, schedules.filter(s => s.work_type === 'holiday'));
+        const otPayExtra = calculateOtPay(emp, schedules.filter(s => s.work_type === 'extra' || s.work_type === 'regular'));
+        
+        const clothingAllowance = Number(emp.clothing_allowance) || 0;
+        const utilityAllowance = Number(emp.utility_allowance) || 0;
+        
         const socialSecurity = calculateSocialSecurity(salary);
+        const depositDeduction = calculateDepositDeduction(emp, emp.deposit_balance);
 
-        const regularShiftsGrouped = schedules
-            .filter(s => s.shift !== 'OT1' && s.shift !== 'OT2')
-            .reduce((acc, s) => {
-                const key = `${s.Route ? s.Route.name : 'Unknown Route'} - ${s.Vehicle ? s.Vehicle.plate_number : 'Unknown Vehicle'}`;
-                acc[key] = (acc[key] || 0) + 1;
-                return acc;
-            }, {});
-
-        const totalEarnings = salary + otPay;
-        const netSalary = totalEarnings - socialSecurity;
+        const totalEarnings = salary + otPaySunday + otPayHoliday + otPayExtra + clothingAllowance + utilityAllowance;
+        const totalDeductions = socialSecurity + totalAdvance + depositDeduction;
+        const netSalary = totalEarnings - totalDeductions;
 
         const payslipResult = {
-            employeeId: empData.employeeId,
-            thaiName: empData.thaiName,
+            employeeId: emp.employee_id,
+            thaiName: emp.thai_name,
             position: emp.position,
+            bankAccountNumber: emp.bank_account_number,
+            bankName: emp.bank_name,
+            plateNumber: schedules[0]?.Vehicle?.plate_number || '-',
             month: parseInt(month),
             year: parseInt(year),
             earnings: {
                 baseSalary: salary,
-                otPay: otPay,
-                otCount: otCount,
-                regularShifts: regularShiftsGrouped,
+                otSunday: otPaySunday,
+                otHoliday: otPayHoliday,
+                otExtra: otPayExtra,
+                clothingAllowance,
+                utilityAllowance,
+                otCountSunday: schedules.filter(s => s.work_type === 'sunday' && (s.shift === 'OT1' || s.shift === 'OT2')).length,
+                otCountHoliday: schedules.filter(s => s.work_type === 'holiday' && (s.shift === 'OT1' || s.shift === 'OT2')).length,
+                otCountExtra: schedules.filter((s => s.work_type === 'extra' || s.work_type === 'regular') && (s.shift === 'OT1' || s.shift === 'OT2')).length,
             },
-            deductions: { socialSecurity: socialSecurity },
+            deductions: { 
+                socialSecurity,
+                advances: totalAdvance,
+                deposit: depositDeduction
+            },
             netSalary,
+            accumulatedDeposit: Number(emp.deposit_balance) + depositDeduction,
+            installmentCount
         };
 
         res.setHeader('Content-Type', 'application/pdf');
@@ -102,73 +99,94 @@ exports.downloadPayslipPDF = async (req, res) => {
 exports.generatePayslip = async (req, res) => {
     try {
         const { month, year } = req.query;
-        
-        if (!month || !year) {
-            return res.status(400).json({ message: 'Month and Year are required for payslip generation.' });
-        }
+        if (!month || !year) return res.status(400).json({ message: 'Month/Year required.' });
 
         const employees = await Employee.findAll();
-        
-        const schedules = await Schedule.findAll({
-            where: getDateFilter(month, year),
-            include: [Route, Vehicle]
-        });
+        const schedules = await Schedule.findAll({ where: getDateFilter(month, year), include: [Vehicle] });
+        const advances = await Advance.findAll({ where: getDateFilter(month, year) });
 
         const payslips = employees.map(emp => {
-            const employeeSchedules = schedules.filter(s => s.employee_id === emp.id);
-            
-            // SKIP if no work records found for this employee in the selected month
-            if (employeeSchedules.length === 0) return null;
+            const empSchedules = schedules.filter(s => s.employee_id === emp.id);
+            if (empSchedules.length === 0) return null;
+
+            const empAdvances = advances.filter(a => a.employee_id === emp.id);
+            const totalAdvance = empAdvances.reduce((sum, a) => sum + Number(a.amount), 0);
 
             const salary = Number(emp.salary) || 0;
-            const empData = {
-                ...emp.toJSON(),
-                thaiName: emp.thai_name,
-                employeeId: emp.employee_id,
-                otRate: Number(emp.ot_rate),
-                bankAccountNumber: emp.bank_account_number,
-                bankName: emp.bank_name
-            };
-
-            const otPay = calculateOtPay(empData, employeeSchedules);
-            const otCount = employeeSchedules.filter(s => s.shift === 'OT1' || s.shift === 'OT2').length;
+            const otPaySunday = calculateOtPay(emp, empSchedules.filter(s => s.work_type === 'sunday'));
+            const otPayHoliday = calculateOtPay(emp, empSchedules.filter(s => s.work_type === 'holiday'));
+            const otPayExtra = calculateOtPay(emp, empSchedules.filter(s => s.work_type === 'extra' || s.work_type === 'regular'));
+            
+            const clothingAllowance = Number(emp.clothing_allowance) || 0;
+            const utilityAllowance = Number(emp.utility_allowance) || 0;
+            
             const socialSecurity = calculateSocialSecurity(salary);
+            const depositDeduction = calculateDepositDeduction(emp, emp.deposit_balance);
 
-            const regularShiftsGrouped = employeeSchedules
-                .filter(s => s.shift !== 'OT1' && s.shift !== 'OT2')
-                .reduce((acc, s) => {
-                    const key = `${s.Route ? s.Route.name : 'Unknown Route'} - ${s.Vehicle ? s.Vehicle.plate_number : 'Unknown Vehicle'}`;
-                    acc[key] = (acc[key] || 0) + 1;
-                    return acc;
-                }, {});
-
-            const totalEarnings = salary + otPay;
-            const netSalary = totalEarnings - socialSecurity;
+            const totalEarnings = salary + otPaySunday + otPayHoliday + otPayExtra + clothingAllowance + utilityAllowance;
+            const totalDeductions = socialSecurity + totalAdvance + depositDeduction;
+            const netSalary = totalEarnings - totalDeductions;
 
             return {
-                employeeId: empData.employeeId,
-                thaiName: empData.thaiName,
+                id: emp.id,
+                employeeId: emp.employee_id,
+                thaiName: emp.thai_name,
                 position: emp.position,
-                bankAccountNumber: empData.bankAccountNumber,
-                bankName: empData.bankName,
                 month: parseInt(month),
                 year: parseInt(year),
+                totalEarnings,
+                totalDeductions,
+                netSalary,
                 earnings: {
                     baseSalary: salary,
-                    otPay: otPay,
-                    otCount: otCount,
-                    regularShifts: regularShiftsGrouped,
+                    otSunday: otPaySunday,
+                    otHoliday: otPayHoliday,
+                    otExtra: otPayExtra,
+                    clothingAllowance,
+                    utilityAllowance
                 },
-                deductions: { socialSecurity: socialSecurity },
-                totalEarnings,
-                totalDeductions: socialSecurity,
-                netSalary,
+                deductions: {
+                    socialSecurity,
+                    advances: totalAdvance,
+                    deposit: depositDeduction
+                }
             };
-        }).filter(p => p !== null); // Remove null entries
+        }).filter(p => p !== null);
 
         res.json(payslips);
     } catch (err) {
-        console.error('Error generating payslips:', err);
         res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
+exports.confirmPayroll = async (req, res) => {
+    const { month, year, payslips } = req.body;
+    const transaction = await sequelize.transaction();
+    try {
+        for (const p of payslips) {
+            await PayrollHistory.create({
+                employee_id: p.id,
+                month,
+                year,
+                base_salary: p.earnings.baseSalary,
+                ot_pay: p.earnings.otSunday + p.earnings.otHoliday + p.earnings.otExtra,
+                social_security: p.deductions.socialSecurity,
+                advance_deduction: p.deductions.advances,
+                deposit_deduction: p.deductions.deposit,
+                net_salary: p.netSalary,
+                accumulated_deposit: (await Employee.findByPk(p.id)).deposit_balance + p.deductions.deposit
+            }, { transaction });
+
+            const emp = await Employee.findByPk(p.id, { transaction });
+            if (emp) {
+                emp.deposit_balance = Number(emp.deposit_balance) + Number(p.deductions.deposit);
+                await emp.save({ transaction });
+            }
+        }
+        await transaction.commit();
+        res.json({ message: 'Payroll confirmed.' });
+    } catch (err) {
+        await transaction.rollback();
+        res.status(500).json({ message: 'Error' });
     }
 };
