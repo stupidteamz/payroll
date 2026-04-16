@@ -33,7 +33,15 @@ export const createRoute = (data) => api.post('/routes', data);
 export const updateRoute = (id, data) => api.put(`/routes/${id}`, data);
 export const deleteRoute = (id) => api.delete(`/routes/${id}`);
 // Schedule Services
-export const getSchedules = () => api.get('/schedules');
+export const getSchedules = (month, year, employeeId) => {
+  let url = '/schedules';
+  const params = new URLSearchParams();
+  if (month) params.append('month', month);
+  if (year) params.append('year', year);
+  if (employeeId) params.append('employeeId', employeeId);
+  if (params.toString()) url += `?${params.toString()}`;
+  return api.get(url);
+};
 export const updateSchedule = (data) => api.post('/schedules', data);
 
 // Payslip Services

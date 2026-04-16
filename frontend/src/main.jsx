@@ -5,11 +5,11 @@ import usePayrollStore from './store/payrollStore';
 import Dashboard from './components/Dashboard';
 import EmployeeList from './components/EmployeeList';
 import ScheduleMatrix from './components/ScheduleMatrix';
+import MonthMatrix from './components/MonthMatrix';
 import VehicleList from './components/VehicleList';
 import RouteList from './components/RouteList';
 import PayslipView from './components/PayslipView';
 import ReportView from './components/ReportView';
-import WorkRecordForm from './components/WorkRecordForm';
 import Login from './components/Login';
 import './Dashboard.css';
 
@@ -30,11 +30,11 @@ function Layout() {
       case '/': return 'แดชบอร์ด';
       case '/employees': return 'จัดการพนักงาน';
       case '/schedule': return 'จัดการตารางงาน';
+      case '/matrix': return 'ตารางสรุปรายเดือน';
       case '/vehicles': return 'จัดการยานพาหนะ';
       case '/routes': return 'จัดการเส้นทาง';
       case '/payslips': return 'สร้างสลิปเงินเดือน';
       case '/reports': return 'รายงาน';
-      case '/work-record': return 'บันทึกรายการวิ่งรถ';
       default: return 'ระบบจัดการเงินเดือน';
     }
   };
@@ -46,8 +46,8 @@ function Layout() {
         <div className="nav">
           <Link to="/" className={isActive('/')}>📊 แดชบอร์ด</Link>
           <Link to="/employees" className={isActive('/employees')}>👥 พนักงาน</Link>
-          <Link to="/schedule" className={isActive('/schedule')}>📅 ตารางงาน</Link>
-          <Link to="/work-record" className={isActive('/work-record')}>📋 บันทึกรายวัน</Link>
+          <Link to="/schedule" className={isActive('/schedule')}>📅 ตารางงาน (รายวัน)</Link>
+          <Link to="/matrix" className={isActive('/matrix')}>📅 ตารางงาน (รายเดือน)</Link>
           <Link to="/vehicles" className={isActive('/vehicles')}>🚛 ยานพาหนะ</Link>
           <Link to="/routes" className={isActive('/routes')}>📍 เส้นทาง</Link>
           <Link to="/payslips" className={isActive('/payslips')}>💰 สลิปเงินเดือน</Link>
@@ -68,7 +68,7 @@ function Layout() {
             <Route path="/" element={<Dashboard employees={employees} summary={summary} />} />
             <Route path="/employees" element={<EmployeeList employees={employees} fetchData={fetchData} />} />
             <Route path="/schedule" element={<ScheduleMatrix employees={employees} routes={routes} vehicles={vehicles} fetchData={fetchData} />} />
-            <Route path="/work-record" element={<WorkRecordForm />} />
+            <Route path="/matrix" element={<MonthMatrix />} />
             <Route path="/vehicles" element={<VehicleList vehicles={vehicles} fetchData={fetchData} />} />
             <Route path="/routes" element={<RouteList routes={routes} fetchData={fetchData} />} />
             <Route path="/payslips" element={<PayslipView />} />
