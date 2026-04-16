@@ -36,8 +36,6 @@ exports.getDashboardSummary = async (req, res) => {
 };
 
 exports.generateTripReport = async (req, res) => {
-// ...
-
     try {
         const { month, year } = req.query;
         if (!month || !year) return res.status(400).json({ message: 'Month and Year required.' });

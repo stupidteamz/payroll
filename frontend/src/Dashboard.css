@@ -165,3 +165,43 @@ button.delete {
   background: #ef4444;
   color: #fff;
 }
+
+/* Matrix Table Styles */
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 0.85em;
+}
+
+.matrix-table th, .matrix-table td {
+  border: 1px solid #e2e8f0;
+  padding: 8px 4px;
+  text-align: center;
+}
+
+.matrix-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+}
+
+.matrix-table tr:hover {
+  background: #f1f5f9;
+}
+
+.matrix-table td:hover {
+  outline: 2px solid #3b82f6;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-group label {
+  font-size: 0.8em;
+  color: #64748b;
+  font-weight: 600;
+}

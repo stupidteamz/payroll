@@ -13,7 +13,8 @@ const Employee = sequelize.define('Employee', {
   clothing_allowance: { type: DataTypes.DECIMAL(10, 2), defaultValue: 500.00 },
   utility_allowance: { type: DataTypes.DECIMAL(10, 2), defaultValue: 500.00 },
   deposit_target: { type: DataTypes.DECIMAL(10, 2), defaultValue: 5000.00 },
-  deposit_balance: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0.00 }
+  deposit_balance: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0.00 },
+  price_per_trip: { type: DataTypes.DECIMAL(10, 2), defaultValue: 590.00 }
 });
 
 const Vehicle = sequelize.define('Vehicle', {
@@ -34,6 +35,7 @@ const Schedule = sequelize.define('Schedule', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   date: { type: DataTypes.DATEONLY, allowNull: false },
   shift: { type: DataTypes.STRING, allowNull: false }, // Morning, Afternoon, OT1, OT2
+  time_slot: { type: DataTypes.STRING }, // e.g. "05.10-06.10"
   work_type: { type: DataTypes.STRING, defaultValue: 'regular' } // regular, sunday, holiday, extra
 });
 
