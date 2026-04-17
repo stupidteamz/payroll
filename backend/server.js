@@ -44,6 +44,8 @@ app.use((req, res, next) => {
 
 // Public Routes
 app.post('/login', authController);
+const { getProxyConfig } = require('./controllers/proxyController');
+app.get('/api/config', getProxyConfig);
 
 // Protected Routes
 app.use(authMiddleware);
